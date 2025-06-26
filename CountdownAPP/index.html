@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Timer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+    <script src="https://cdn.lordicon.com/lordicon.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="countdown-container">
+            <svg class="countdown-svg" viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="warm-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#85FFBD"></stop>
+                        <stop offset="100%" style="stop-color:#FFFB7D"></stop>
+                    </linearGradient>
+                </defs>
+                <circle class="countdown-circle" cx="50" cy="50" r="45"></circle>
+            </svg>
+            <div class="countdown-text" id="countdown">00:00</div>
+        </div>
+        <div class="controls">
+            <input type="number" id="timeInput" placeholder="Enter time in seconds" min="1">
+            <div class="buttons">
+                <button id="startBtn">
+                    <lord-icon
+                        src="https://cdn.lordicon.com/aklfruoc.json"
+                        trigger="hover"
+                        colors="primary:#ffffff">
+                    </lord-icon>
+                    Start
+                </button>
+                <button id="pauseBtn">
+                    <lord-icon
+                        src="https://cdn.lordicon.com/ptvmrrcc.json"
+                        trigger="hover"
+                        colors="primary:#ffffff">
+                    </lord-icon>
+                    Pause
+                </button>
+                <button id="resetBtn">
+                    <lord-icon
+                        src="https://cdn.lordicon.com/rsbokaso.json"
+                        trigger="hover"
+                        colors="primary:#ffffff">
+                    </lord-icon>
+                    Reset
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let timer;
+        let isRunning = false;
+        let totalTime = 0;
+        let timeLeft = 0;
+        
+        const countdownElement = document.getElementById('countdown');
+        const circleElement = document.querySelector('.countdown-circle');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const timeInput = document.getElementById('timeInput');
+        
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+        
+        function updateDisplay() {
+            countdownElement.textContent = formatTime(timeLeft);
+            
+            // Update circle progress
+            const circumference = 2 * Math.PI * 45;
+            const progress = totalTime > 0 ? (totalTime - timeLeft) / totalTime : 0;
+            const offset = circumference - (progress * circumference);
+            circleElement.style.strokeDashoffset = offset;
+            
+            // Add warning class when time is low
+            if (timeLeft <= 10 && timeLeft > 0) {
+                countdownElement.classList.add('warning');
+            } else {
+                countdownElement.classList.remove('warning');
+            }
+            
+            // Add finished class when time is up
+            if (timeLeft === 0) {
+                countdownElement.classList.add('finished');
+                countdownElement.classList.remove('warning');
+            } else {
+                countdownElement.classList.remove('finished');
+            }
+        }
+        
+        function startTimer() {
+            if (!isRunning) {
+                if (timeLeft === 0) {
+                    const inputTime = parseInt(timeInput.value);
+                    if (inputTime && inputTime > 0) {
+                        totalTime = inputTime;
+                        timeLeft = inputTime;
+                    } else {
+                        alert('Please enter a valid time');
+                        return;
+                    }
+                }
+                
+                isRunning = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                
+                timer = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    
+                    if (timeLeft === 0) {
+                        clearInterval(timer);
+                        isRunning = false;
+                        startBtn.disabled = false;
+                        pauseBtn.disabled = true;
+                        alert('Time\'s up!');
+                    }
+                }, 1000);
+            }
+        }
+        
+        function pauseTimer() {
+            if (isRunning) {
+                clearInterval(timer);
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+            }
+        }
+        
+        function resetTimer() {
+            clearInterval(timer);
+            isRunning = false;
+            timeLeft = 0;
+            totalTime = 0;
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            timeInput.value = '';
+            updateDisplay();
+        }
+        
+        // Event listeners
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        
+        timeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startTimer();
+            }
+        });
+        
+        // Initialize
+        pauseBtn.disabled = true;
+        updateDisplay();
+    </script>
+</body>
+</html>

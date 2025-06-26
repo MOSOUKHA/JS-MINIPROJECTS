@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Music Player</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,700">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .music-player {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 350px;
+            width: 100%;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 0;
+        }
+
+        .left, .right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .center {
+            flex: 1;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .song-title {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .artist-name {
+            color: #666;
+            font-size: 14px;
+            margin: 5px 0 0 0;
+        }
+
+        .progress-container {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-top: 15px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #007bff;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .current, .duration {
+            font-size: 12px;
+            color: #666;
+            min-width: 40px;
+        }
+
+        .play-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .volume-level {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Boutons simples */
+        .btn {
+            background: #666;
+            border: none;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-small {
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
+        }
+
+        .btn-large {
+            width: 50px;
+            height: 50px;
+            font-size: 16px;
+            background: #007bff;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-small:hover {
+            background: #333;
+        }
+
+        .btn-large:hover {
+            background: #0056b3;
+        }
+
+        .volume-slider {
+            width: 60px;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .volume-fill {
+            height: 100%;
+            background: #666;
+            border-radius: 2px;
+            width: 70%;
+        }
+
+        audio {
+            display: none;
+        }
+
+        .active {
+            background: #007bff !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="music-player">
+        <div class="info">
+            <div class="left">
+                <button class="btn btn-small" id="shuffleBtn" title="Shuffle">🔀</button>
+                <button class="btn btn-small" id="favoriteBtn" title="Favorite">❤️</button>
+            </div>
+
+            <div class="center">
+                <h3 class="song-title" id="songTitle">No Song Selected</h3>
+                <p class="artist-name" id="artistName">Unknown Artist</p>
+            </div>
+
+            <div class="right">
+                <button class="btn btn-small" id="repeatBtn" title="Repeat">🔁</button>
+                <button class="btn btn-small" id="shareBtn" title="Share">📤</button>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="controls">
+            <div class="current" id="currentTime">00:00</div>
+            
+            <div class="play-controls">
+                <button class="btn btn-small" id="prevBtn" title="Previous">⏮️</button>
+                <button class="btn btn-large" id="playPauseBtn" title="Play">▶️</button>
+                <button class="btn btn-small" id="nextBtn" title="Next">⏭️</button>
+            </div>
+            
+            <div class="volume-level">
+                <button class="btn btn-small" id="volumeBtn" title="Volume">🔊</button>
+                <div class="volume-slider" id="volumeSlider">
+                    <div class="volume-fill" id="volumeFill"></div>
+                </div>
+            </div>
+        </div>
+
+        <audio id="audioPlayer" preload="metadata">
+            <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.wav" type="audio/wav">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = document.getElementById('progressContainer');
+        const currentTime = document.getElementById('currentTime');
+        const songTitle = document.getElementById('songTitle');
+        const artistName = document.getElementById('artistName');
+        const volumeBtn = document.getElementById('volumeBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeFill = document.getElementById('volumeFill');
+
+        let isPlaying = false;
+        let currentVolume = 0.7;
+
+        // Sample playlist
+        const playlist = [
+            {
+                title: "Sample Song 1",
+                artist: "Demo Artist",
+                src: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav"
+            }
+        ];
+
+        let currentSongIndex = 0;
+
+        // Initialize
+        audioPlayer.volume = currentVolume;
+        loadSong(currentSongIndex);
+
+        function loadSong(index) {
+            const song = playlist[index];
+            if (song) {
+                audioPlayer.src = song.src;
+                songTitle.textContent = song.title;
+                artistName.textContent = song.artist;
+            }
+        }
+
+        function togglePlayPause() {
+            if (isPlaying) {
+                audioPlayer.pause();
+                playPauseBtn.innerHTML = '▶️';
+                isPlaying = false;
+            } else {
+                audioPlayer.play();
+                playPauseBtn.innerHTML = '⏸️';
+                isPlaying = true;
+            }
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateProgress() {
+            if (audioPlayer.duration) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.style.width = progress + '%';
+                currentTime.textContent = formatTime(audioPlayer.currentTime);
+            }
+        }
+
+        function setProgress(e) {
+            const width = progressContainer.offsetWidth;
+            const clickX = e.offsetX;
+            const duration = audioPlayer.duration;
+            audioPlayer.currentTime = (clickX / width) * duration;
+        }
+
+        function setVolume(e) {
+            const width = volumeSlider.offsetWidth;
+            const clickX = e.offsetX;
+            const volume = clickX / width;
+            audioPlayer.volume = volume;
+            volumeFill.style.width = volume * 100 + '%';
+            currentVolume = volume;
+        }
+
+        // Event listeners
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        audioPlayer.addEventListener('timeupdate', updateProgress);
+        progressContainer.addEventListener('click', setProgress);
+        volumeSlider.addEventListener('click', setVolume);
+
+        prevBtn.addEventListener('click', () => {
+            currentSongIndex = currentSongIndex > 0 ? currentSongIndex - 1 : playlist.length - 1;
+            loadSong(currentSongIndex);
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentSongIndex = currentSongIndex < playlist.length - 1 ? currentSongIndex + 1 : 0;
+            loadSong(currentSongIndex);
+        });
+
+        volumeBtn.addEventListener('click', () => {
+            if (audioPlayer.volume > 0) {
+                audioPlayer.volume = 0;
+                volumeFill.style.width = '0%';
+                volumeBtn.innerHTML = '🔇';
+            } else {
+                audioPlayer.volume = currentVolume;
+                volumeFill.style.width = currentVolume * 100 + '%';
+                volumeBtn.innerHTML = '🔊';
+            }
+        });
+
+        audioPlayer.addEventListener('ended', () => {
+            playPauseBtn.innerHTML = '▶️';
+            isPlaying = false;
+        });
+    </script>
+</body>
+</html>
